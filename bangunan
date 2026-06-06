@@ -1,0 +1,319 @@
+-- ==========================================
+-- ROBLOX VISUAL ASSET SPAWNER V7.8 (FULL COMPLETE VERSION)
+-- ==========================================
+
+local player = game.Players.LocalPlayer
+local coreGui = game:GetService("CoreGui") or player:WaitForChild("PlayerGui")
+local Camera = workspace.CurrentCamera
+local HttpService = game:GetService("HttpService")
+
+local assetList = {
+    -- KELOMPOK MASJID (BARU)
+    {Name = "Masjid 1", ID = "6810419454"},
+    {Name = "Masjid 2", ID = "3012531893"},
+    {Name = "Masjid 3", ID = "85911094510771"},
+    {Name = "Masjid 4", ID = "99865027714237"},
+    {Name = "Masjid 5", ID = "5534205372"},
+    {Name = "Masjid 6", ID = "17478211398"},
+    {Name = "Masjid 7", ID = "4989149646"},
+    {Name = "Masjid 8", ID = "6554977614"},
+    {Name = "Masjid 9", ID = "167190567"},
+
+    -- Bangunan Original
+    {Name = "Bangunan 1", ID = "95328463271667"}, {Name = "Bangunan 2", ID = "14731623994"},
+    {Name = "Bangunan 3", ID = "11060633677"}, {Name = "Bangunan 4", ID = "12143547490"}, 
+    {Name = "Bangunan 5", ID = "13854749583"}, {Name = "Bangunan 6", ID = "18902234051"},
+    {Name = "Bangunan 7", ID = "9032369016"}, {Name = "Bangunan 8", ID = "9676302649"},
+    {Name = "Bangunan 9", ID = "89334519773324"}, {Name = "Bangunan 10", ID = "2799652039"},
+    {Name = "Bangunan 11", ID = "4928101363"}, {Name = "Bangunan 12", ID = "131032396910677"},
+    {Name = "Bangunan 13", ID = "15823512019"}, {Name = "Bangunan 14", ID = "90366969155006"},
+    {Name = "Bangunan 15", ID = "20886822"}, {Name = "Bangunan 16", ID = "8483659966"},
+    {Name = "Bangunan 17", ID = "13156629984"}, {Name = "Bangunan 18", ID = "94226889541727"},
+    {Name = "Bangunan 19", ID = "15584054213"}, {Name = "Bangunan 20", ID = "10330844776"},
+    
+    -- KELOMPOK PESAWAT & KENDARAAN
+    {Name = "pesawat", ID = "5032786420"}, 
+    {Name = "pesawat airbus", ID = "10828109856"},
+    {Name = "pesawat tempur", ID = "163679132"},
+    {Name = "bomber", ID = "4735054708"},
+    {Name = "jet", ID = "80035747745904"},
+    {Name = "ekskavator", ID = "9028664826"},
+    
+    -- KELOMPOK KOTA & GEDUNG
+    {Name = "new york", ID = "7130185320"}, 
+    {Name = "kota", ID = "10976110724"},
+    {Name = "struktur kota", ID = "2016622640"},
+    {Name = "gedung kota", ID = "11963318908"},
+    {Name = "gedung", ID = "11410874481"},
+    {Name = "gedung", ID = "12167498021"},
+    {Name = "gedung bazhard", ID = "11475423490"},
+    {Name = "kompleks gedung", ID = "1151728216"},
+    {Name = "apartemen", ID = "11060633677"},
+    {Name = "sekolah1", ID = "4893502792"},
+    {Name = "sekolah2", ID = "16325692519"}, 
+    {Name = "motel", ID = "2292364"},
+    {Name = "hotel", ID = "14890876654"},
+    {Name = "perpustakaan", ID = "5596386522"},
+    {Name = "pusat resains", ID = "6154077644"},
+    {Name = "stadion", ID = "4807728287"},
+    
+    -- KELOMPOK KAPAL LAUT
+    {Name = "kapal pesiar kecil", ID = "12209907499"}, 
+    {Name = "kapal pesiar besar", ID = "9358736830"},
+    {Name = "kapal pesiar mewah", ID = "58487077"}, 
+    {Name = "kapal pesiar", ID = "14461111692"},
+    {Name = "kapal kotak", ID = "13852654755"},
+    {Name = "kapal induk", ID = "282793216"},
+    {Name = "kapal induk", ID = "8362454477"},
+    {Name = "kapal", ID = "14795929106"},
+
+    -- KELOMPOK RUMAH, MONUMEN & LAINNYA
+    {Name = "Prambanan", ID = "6953878"}, 
+    {Name = "tembok china", ID = "333879260"},
+    {Name = "tugu", ID = "377896878"},
+    {Name = "gerbang", ID = "22908211"},
+    {Name = "tahta", ID = "10782792190"},
+    {Name = "patung kotak", ID = "10782792190"},
+    {Name = "rumah mewah", ID = "17326127841"},
+    {Name = "rumah mewah", ID = "76709767466056"}
+}
+
+local spawnedObjects = {} 
+local previewModel, lastSelectedModel = nil, nil
+local buildModeActive, isMinimized, camZoom = false, false, 150
+local selectedButton = nil
+local actionType = ""
+
+if coreGui:FindFirstChild("VisualSpawnerGUI") then coreGui.VisualSpawnerGUI:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "VisualSpawnerGUI"; ScreenGui.Parent = coreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 260, 0, 360) 
+MainFrame.Position = UDim2.new(0.5, -130, 0.5, -180)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10); MainFrame.BackgroundTransparency = 0.2
+MainFrame.Active, MainFrame.Draggable = true, true; MainFrame.Parent = ScreenGui
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 25); TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+TopBar.BackgroundTransparency = 0.2; TopBar.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -60, 1, 0); Title.Position = UDim2.new(0, 8, 0, 0)
+Title.BackgroundTransparency = 1; Title.Text = "ARCHITECT V7.8 FULL"; Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold; Title.TextSize = 9; Title.TextXAlignment = Enum.TextXAlignment.Left; Title.Parent = TopBar
+
+local function createBtn(txt, pos, size, parent, color)
+    local b = Instance.new("TextButton")
+    b.Size, b.Position = size, pos
+    b.BackgroundColor3 = color or Color3.fromRGB(40, 40, 40); b.BackgroundTransparency = 0.1
+    b.Text, b.TextColor3, b.Font, b.TextSize = txt, Color3.new(1,1,1), Enum.Font.GothamBold, 8
+    b.Parent = parent; local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 3); c.Parent = b
+    return b
+end
+
+local MinBtn = createBtn("-", UDim2.new(1, -50, 0, 0), UDim2.new(0, 25, 1, 0), TopBar, Color3.fromRGB(50,50,50))
+local CloseBtn = createBtn("X", UDim2.new(1, -25, 0, 0), UDim2.new(0, 25, 1, 0), TopBar, Color3.fromRGB(80, 20, 20))
+
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, 0, 0, 110); ScrollFrame.Position = UDim2.new(0, 0, 0, 25)
+ScrollFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15); ScrollFrame.BackgroundTransparency = 0.3
+ScrollFrame.ScrollBarThickness = 2; ScrollFrame.Parent = MainFrame
+
+local ControlPanel = Instance.new("Frame")
+ControlPanel.Size = UDim2.new(1, 0, 1, -135); ControlPanel.Position = UDim2.new(0, 0, 0, 135)
+ControlPanel.BackgroundTransparency = 1; ControlPanel.Parent = MainFrame
+
+local UIList = Instance.new("UIListLayout"); UIList.Padding = UDim.new(0, 3)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center; UIList.Parent = ScrollFrame
+
+local SlotMenu = Instance.new("Frame")
+SlotMenu.Size = UDim2.new(1, 0, 1, -25); SlotMenu.Position = UDim2.new(0, 0, 0, 25)
+SlotMenu.BackgroundColor3 = Color3.fromRGB(15, 15, 15); SlotMenu.BackgroundTransparency = 0.1
+SlotMenu.Visible = false; SlotMenu.ZIndex = 5; SlotMenu.Parent = MainFrame
+
+local SlotTitle = Instance.new("TextLabel")
+SlotTitle.Size = UDim2.new(1, 0, 0, 30); SlotTitle.Position = UDim2.new(0, 0, 0, 10)
+SlotTitle.BackgroundTransparency = 1; SlotTitle.TextColor3 = Color3.new(1, 0.8, 0)
+SlotTitle.Font = Enum.Font.GothamBold; SlotTitle.TextSize = 12; SlotTitle.ZIndex = 6; SlotTitle.Parent = SlotMenu
+
+local slotBtns = {}
+for i = 1, 4 do
+    local btn = createBtn("SLOT " .. i, UDim2.new(0.1, 0, 0, 20 + (i*40)), UDim2.new(0.8, 0, 0, 30), SlotMenu, Color3.fromRGB(40, 50, 60))
+    btn.ZIndex = 6; slotBtns[i] = btn
+end
+local CancelSlotBtn = createBtn("CANCEL", UDim2.new(0.1, 0, 0, 230), UDim2.new(0.8, 0, 0, 25), SlotMenu, Color3.fromRGB(100, 30, 30))
+CancelSlotBtn.ZIndex = 6
+
+local SaveBtn = createBtn("SAVE MAP", UDim2.new(0.05, 0, 0.02, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel, Color3.fromRGB(100, 80, 20))
+local LoadBtn = createBtn("LOAD MAP", UDim2.new(0.51, 0, 0.02, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel, Color3.fromRGB(20, 80, 100))
+local ModeBtn = createBtn("BUILD: OFF", UDim2.new(0.05, 0, 0.12, 0), UDim2.new(0.9, 0, 0.08, 0), ControlPanel, Color3.fromRGB(60, 30, 90))
+local PlaceBtn = createBtn("PASANG", UDim2.new(0.05, 0, 0.22, 0), UDim2.new(0.9, 0, 0.1, 0), ControlPanel, Color3.fromRGB(30, 100, 30))
+PlaceBtn.Visible = false
+
+local ZoomIn = createBtn("Z+", UDim2.new(0.05, 0, 0.34, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel)
+local ZoomOut = createBtn("Z-", UDim2.new(0.51, 0, 0.34, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel)
+local ObjFwd = createBtn("▲", UDim2.new(0.4, 0, 0.44, 0), UDim2.new(0.2, 0, 0.1, 0), ControlPanel)
+local ObjBack = createBtn("▼", UDim2.new(0.4, 0, 0.66, 0), UDim2.new(0.2, 0, 0.1, 0), ControlPanel)
+local ObjLeft = createBtn("◀", UDim2.new(0.2, 0, 0.55, 0), UDim2.new(0.2, 0, 0.1, 0), ControlPanel)
+local ObjRight = createBtn("▶", UDim2.new(0.6, 0, 0.55, 0), UDim2.new(0.2, 0, 0.1, 0), ControlPanel)
+local UpBtn = createBtn("UP", UDim2.new(0.05, 0, 0.78, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel, Color3.fromRGB(40, 60, 80))
+local DownBtn = createBtn("DOWN", UDim2.new(0.51, 0, 0.78, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel, Color3.fromRGB(40, 60, 80))
+local RLBtn = createBtn("⟲", UDim2.new(0.05, 0, 0.88, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel)
+local RRBtn = createBtn("⟳", UDim2.new(0.51, 0, 0.88, 0), UDim2.new(0.44, 0, 0.08, 0), ControlPanel)
+
+local function getGroundPrecision(pos, model)
+    local p = RaycastParams.new(); p.FilterDescendantsInstances = {model, player.Character}
+    local ray = workspace:Raycast(pos + Vector3.new(0, 100, 0), Vector3.new(0, -300, 0), p)
+    local floorY = ray and ray.Position.Y or pos.Y
+    local _, size = model:GetBoundingBox()
+    return Vector3.new(pos.X, floorY + (size.Y/2), pos.Z)
+end
+
+local function updateCam()
+    local t = previewModel or lastSelectedModel
+    if buildModeActive and t then
+        local p = t:GetPivot().Position
+        Camera.CFrame = CFrame.new(p + Vector3.new(0, camZoom, 0.1), p)
+    end
+end
+
+SaveBtn.MouseButton1Click:Connect(function()
+    actionType = "SAVE"; SlotTitle.Text = "PILIH SLOT UNTUK SAVE"
+    SlotTitle.TextColor3 = Color3.fromRGB(255, 200, 50); SlotMenu.Visible = true
+end)
+
+LoadBtn.MouseButton1Click:Connect(function()
+    actionType = "LOAD"; SlotTitle.Text = "PILIH SLOT UNTUK LOAD"
+    SlotTitle.TextColor3 = Color3.fromRGB(50, 200, 255); SlotMenu.Visible = true
+end)
+
+CancelSlotBtn.MouseButton1Click:Connect(function() SlotMenu.Visible = false end)
+
+for i, btn in ipairs(slotBtns) do
+    btn.MouseButton1Click:Connect(function()
+        local slotFileName = "ArchitectSave_" .. game.PlaceId .. "_Slot" .. i .. ".json"
+        if actionType == "SAVE" then
+            local data = {}
+            for id, list in pairs(spawnedObjects) do
+                for _, obj in pairs(list) do
+                    local cf = obj:GetPivot()
+                    table.insert(data, {AssetID = id, Pos = {cf:GetComponents()}})
+                end
+            end
+            writefile(slotFileName, HttpService:JSONEncode(data))
+            SlotMenu.Visible = false; SaveBtn.Text = "SAVED TO SLOT " .. i
+            SaveBtn.BackgroundColor3 = Color3.fromRGB(30, 150, 30)
+            task.wait(1.5); SaveBtn.Text = "SAVE MAP"; SaveBtn.BackgroundColor3 = Color3.fromRGB(100, 80, 20)
+        elseif actionType == "LOAD" then
+            if not isfile(slotFileName) then 
+                btn.Text = "SLOT KOSONG!"; btn.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
+                task.wait(1); btn.Text = "SLOT " .. i; btn.BackgroundColor3 = Color3.fromRGB(40, 50, 60)
+                return 
+            end
+            local data = HttpService:JSONDecode(readfile(slotFileName))
+            for _, info in pairs(data) do
+                local success, objs = pcall(function() return game:GetObjects("rbxassetid://" .. info.AssetID) end)
+                if success and objs[1] then
+                    local model = objs[1]; model.Parent = workspace; model:PivotTo(CFrame.new(unpack(info.Pos)))
+                    for _, d in pairs(model:GetDescendants()) do if d:IsA("BasePart") then d.Anchored = true; d.CanCollide = true end end
+                    if not spawnedObjects[info.AssetID] then spawnedObjects[info.AssetID] = {} end
+                    table.insert(spawnedObjects[info.AssetID], model); lastSelectedModel = model
+                end
+            end
+            SlotMenu.Visible = false; LoadBtn.Text = "SLOT " .. i .. " LOADED!"
+            LoadBtn.BackgroundColor3 = Color3.fromRGB(30, 150, 30)
+            task.wait(1.5); LoadBtn.Text = "LOAD MAP"; LoadBtn.BackgroundColor3 = Color3.fromRGB(20, 80, 100)
+        end
+    end)
+end
+
+local currentItemID = ""
+PlaceBtn.MouseButton1Click:Connect(function()
+    if previewModel and currentItemID ~= "" then
+        for _, d in pairs(previewModel:GetDescendants()) do
+            if d:IsA("BasePart") then d.Transparency = 0; d.CanCollide = true; d.Anchored = true end
+        end
+        if not spawnedObjects[currentItemID] then spawnedObjects[currentItemID] = {} end
+        table.insert(spawnedObjects[currentItemID], previewModel)
+        lastSelectedModel = previewModel; previewModel = nil; PlaceBtn.Visible = false
+    end
+end)
+
+local function move(act)
+    local t = previewModel or lastSelectedModel
+    if not t then return end
+    local cf, s = t:GetPivot(), 2.5
+    if act == "F" then t:PivotTo(cf * CFrame.new(0,0,-s))
+    elseif act == "B" then t:PivotTo(cf * CFrame.new(0,0,s))
+    elseif act == "L" then t:PivotTo(cf * CFrame.new(-s,0,0))
+    elseif act == "R" then t:PivotTo(cf * CFrame.new(s,0,0))
+    elseif act == "U" then t:PivotTo(cf * CFrame.new(0,s,0))
+    elseif act == "D" then t:PivotTo(cf * CFrame.new(0,-s,0))
+    elseif act == "RL" then t:PivotTo(cf * CFrame.Angles(0,math.rad(15),0))
+    elseif act == "RR" then t:PivotTo(cf * CFrame.Angles(0,math.rad(-15),0)) end
+    updateCam()
+end
+
+ObjFwd.MouseButton1Click:Connect(function() move("F") end)
+ObjBack.MouseButton1Click:Connect(function() move("B") end)
+ObjLeft.MouseButton1Click:Connect(function() move("L") end)
+ObjRight.MouseButton1Click:Connect(function() move("R") end)
+UpBtn.MouseButton1Click:Connect(function() move("U") end)
+DownBtn.MouseButton1Click:Connect(function() move("D") end)
+RLBtn.MouseButton1Click:Connect(function() move("RL") end)
+RRBtn.MouseButton1Click:Connect(function() move("RR") end)
+
+ModeBtn.MouseButton1Click:Connect(function()
+    buildModeActive = not buildModeActive
+    ModeBtn.Text = buildModeActive and "BUILD: ON" or "BUILD: OFF"
+    ModeBtn.BackgroundColor3 = buildModeActive and Color3.fromRGB(30, 120, 30) or Color3.fromRGB(60, 30, 90)
+    Camera.CameraType = buildModeActive and Enum.CameraType.Scriptable or Enum.CameraType.Custom
+    updateCam()
+end)
+
+ZoomIn.MouseButton1Click:Connect(function() camZoom = math.max(20, camZoom - 30); updateCam() end)
+ZoomOut.MouseButton1Click:Connect(function() camZoom = math.min(1000, camZoom + 30); updateCam() end)
+
+MinBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    ScrollFrame.Visible, ControlPanel.Visible = not isMinimized, not isMinimized
+    if SlotMenu.Visible then SlotMenu.Visible = false end 
+    MainFrame.Size = isMinimized and UDim2.new(0, 260, 0, 25) or UDim2.new(0, 260, 0, 360)
+    MinBtn.Text = isMinimized and "+" or "-"
+end)
+
+for _, item in ipairs(assetList) do
+    local r = Instance.new("Frame")
+    r.Size = UDim2.new(0.95, 0, 0, 28); r.BackgroundTransparency = 1; r.Parent = ScrollFrame
+    local s = createBtn(item.Name, UDim2.new(0, 0, 0, 0), UDim2.new(0.8, -2, 1, 0), r, Color3.fromRGB(30, 30, 30))
+    local d = createBtn("X", UDim2.new(0.8, 2, 0, 0), UDim2.new(0.2, -2, 1, 0), r, Color3.fromRGB(80, 30, 30))
+    s.MouseButton1Click:Connect(function()
+        if selectedButton then selectedButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30) end
+        selectedButton = s; s.BackgroundColor3 = Color3.fromRGB(50, 80, 120); currentItemID = item.ID
+        if previewModel then previewModel:Destroy() end
+        local success, objs = pcall(function() return game:GetObjects("rbxassetid://" .. item.ID) end)
+        if success and objs[1] then
+            previewModel = objs[1]; previewModel.Parent = workspace
+            for _, b in pairs(previewModel:GetDescendants()) do
+                if b:IsA("BasePart") then b.Transparency = 0.5; b.CanCollide = false; b.Anchored = true end
+            end
+            local root = player.Character.HumanoidRootPart
+            local _, bSize = previewModel:GetBoundingBox()
+            local spawnPos = root.Position + (root.CFrame.LookVector * ((bSize.Z/2) + 5))
+            previewModel:PivotTo(CFrame.new(getGroundPrecision(spawnPos, previewModel)))
+            PlaceBtn.Visible = true; updateCam()
+        end
+    end)
+    d.MouseButton1Click:Connect(function()
+        local list = spawnedObjects[item.ID]
+        if list and #list > 0 then
+            list[#list]:Destroy(); table.remove(list, #list)
+            lastSelectedModel = list[#list]; updateCam()
+        end
+    end)
+end
+
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy(); Camera.CameraType = Enum.CameraType.Custom end)
+ScrollFrame.CanvasSize = UDim2.new(0,0,0, #assetList * 31)
